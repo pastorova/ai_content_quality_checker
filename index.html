@@ -1,114 +1,210 @@
 <!DOCTYPE html>
 <html lang="sk">
 <head>
-  <meta charset="UTF-8">
-  <title>AI Content Quality Checker</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f1ec;
-      margin: 0;
-      padding: 40px;
-      color: #1f1f1f;
-    }
-    .container {
-      max-width: 850px;
-      margin: auto;
-      background: white;
-      padding: 35px;
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    textarea {
-      width: 100%;
-      height: 180px;
-      padding: 15px;
-      font-size: 16px;
-      margin-top: 20px;
-      border-radius: 12px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background: #111;
-      color: white;
-      border: none;
-      padding: 14px 24px;
-      border-radius: 10px;
-      margin-top: 15px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    .result {
-      margin-top: 25px;
-      padding: 20px;
-      background: #f8f8f8;
-      border-radius: 14px;
-      white-space: pre-line;
-    }
-    .tag {
-      display: inline-block;
-      background: #e8dfd2;
-      padding: 6px 10px;
-      border-radius: 20px;
-      margin-bottom: 15px;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>AI Content Quality Checker</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f7f7f8;
+  color: #111;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 40px 20px;
+}
+
+h1 {
+  font-size: 32px;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+textarea {
+  width: 100%;
+  height: 160px;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+}
+
+button {
+  margin-top: 15px;
+  padding: 14px 22px;
+  border: none;
+  background: black;
+  color: white;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.score {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.good { color: green; }
+.medium { color: orange; }
+.bad { color: red; }
+
+.block {
+  margin-top: 15px;
+}
+
+.label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+.improved {
+  background: #f1f5f9;
+  padding: 15px;
+  border-radius: 10px;
+  white-space: pre-line;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
-  <span class="tag">AI nástroj pre obsah</span>
+
   <h1>AI Content Quality Checker</h1>
-  <p>Vlož text a aplikácia vyhodnotí kvalitu obsahu z pohľadu štruktúry, SEO, čitateľnosti a zrozumiteľnosti.</p>
+  <div class="subtitle">Zlepši svoj text – SEO, čitateľnosť a konverzia</div>
 
-  <textarea id="text" placeholder="Vlož sem text, napríklad popis nehnuteľnosti..."></textarea>
+  <div class="card">
+    <textarea id="text" placeholder="Vlož text... napr. popis bytu v Košiciach"></textarea>
+    <button onclick="analyze()">Analyzovať</button>
+  </div>
 
-  <button onclick="analyzeText()">Analyzovať text</button>
+  <div class="card" id="result" style="display:none;">
+    <div class="score" id="score"></div>
 
-  <div class="result" id="result"></div>
+    <div class="block">
+      <div class="label">❌ Chyby</div>
+      <ul id="errors"></ul>
+    </div>
+
+    <div class="block">
+      <div class="label">💡 Odporúčania</div>
+      <ul id="tips"></ul>
+    </div>
+
+    <div class="block">
+      <div class="label">✨ Vylepšený text</div>
+      <div class="improved" id="improved"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-function analyzeText() {
+function analyze() {
   const text = document.getElementById("text").value;
   const result = document.getElementById("result");
 
   if (text.trim() === "") {
-    result.innerText = "Prosím, vlož najprv nejaký text.";
+    alert("Vlož text");
     return;
   }
 
-  let score = 60;
+  let score = 50;
+  let errors = [];
+  let tips = [];
 
-  if (text.length > 300) score += 10;
-  if (text.includes(".") || text.includes(",")) score += 10;
-  if (text.toLowerCase().includes("kontakt")) score += 10;
-  if (text.toLowerCase().includes("lokalita") || text.toLowerCase().includes("košice")) score += 10;
+  if (text.length < 200) {
+    errors.push("Text je príliš krátky");
+    tips.push("Rozšír text o detaily a benefity");
+  } else {
+    score += 10;
+  }
+
+  if (!text.includes("Košice") && !text.includes("lokalita")) {
+    errors.push("Chýba lokalita");
+    tips.push("Pridaj konkrétnu lokalitu (napr. Košice)");
+  } else {
+    score += 10;
+  }
+
+  if (!text.toLowerCase().includes("kontakt")) {
+    errors.push("Chýba výzva k akcii");
+    tips.push("Pridaj CTA – napr. Kontaktujte nás");
+  } else {
+    score += 10;
+  }
+
+  if (!text.includes(".")) {
+    errors.push("Text nemá štruktúru viet");
+    tips.push("Použi krátke vety a odseky");
+  } else {
+    score += 10;
+  }
 
   if (score > 100) score = 100;
 
-  let feedback = "";
+  // farba skóre
+  let scoreClass = "bad";
+  if (score >= 75) scoreClass = "good";
+  else if (score >= 60) scoreClass = "medium";
 
-  if (score >= 85) {
-    feedback = "Výborný text. Má dobrú štruktúru, jasný účel a pôsobí profesionálne.";
-  } else if (score >= 70) {
-    feedback = "Text je dobrý, ale dá sa ešte vylepšiť. Odporúčam pridať silnejší nadpis, jasnejšiu výzvu k akcii a viac konkrétnych detailov.";
-  } else {
-    feedback = "Text potrebuje úpravu. Skús ho rozdeliť na kratšie odseky, doplniť kľúčové slová a jasne povedať, čo má čitateľ urobiť ďalej.";
-  }
+  document.getElementById("score").innerHTML =
+    "Skóre: <span class='" + scoreClass + "'>" + score + "/100</span>";
 
-  result.innerText =
-    "Hodnotenie kvality: " + score + "/100\n\n" +
-    feedback + "\n\n" +
-    "AI odporúčanie:\n" +
-    "- pridaj konkrétnu lokalitu\n" +
-    "- použi výstižný nadpis\n" +
-    "- doplň výzvu k akcii\n" +
-    "- text rozdeľ na kratšie časti";
+  // vypíš chyby
+  let errorsHTML = "";
+  errors.forEach(e => errorsHTML += "<li>" + e + "</li>");
+  document.getElementById("errors").innerHTML = errorsHTML;
+
+  // vypíš tipy
+  let tipsHTML = "";
+  tips.forEach(t => tipsHTML += "<li>" + t + "</li>");
+  document.getElementById("tips").innerHTML = tipsHTML;
+
+  // ✨ vylepšený text
+  let improved = 
+`🏡 EXKLUZÍVNA PONUKA
+
+Ponúkame na predaj nehnuteľnosť v atraktívnej lokalite.
+
+Táto nehnuteľnosť je ideálna pre bývanie aj investíciu. Vyznačuje sa praktickou dispozíciou a príjemným prostredím.
+
+📍 Lokalita: Košice
+
+💰 Cena: na vyžiadanie
+
+✨ Výhody:
+- dobrá dostupnosť
+- kompletná občianska vybavenosť
+- potenciál rastu hodnoty
+
+📞 Kontaktujte nás pre viac informácií alebo obhliadku.`;
+
+  document.getElementById("improved").innerText = improved;
+
+  result.style.display = "block";
 }
 </script>
 
