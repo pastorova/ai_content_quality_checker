@@ -2,209 +2,583 @@
 <html lang="sk">
 <head>
 <meta charset="UTF-8">
-<title>AI Content Quality Checker</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Quality Checker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f7f7f8;
-  color: #111;
-}
+  :root {
+    --bg: #F5F2ED;
+    --surface: #FFFFFF;
+    --text: #1A1A1A;
+    --muted: #7A7570;
+    --border: #E5E0D8;
+    --green: #2D6A4F;
+    --green-bg: #EAF4EE;
+    --orange: #B5540A;
+    --orange-bg: #FEF3E8;
+    --red: #B91C1C;
+    --red-bg: #FEF2F2;
+    --accent: #1A1A1A;
+  }
 
-.container {
-  max-width: 900px;
-  margin: auto;
-  padding: 40px 20px;
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-h1 {
-  font-size: 32px;
-  margin-bottom: 5px;
-}
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 48px 20px;
+  }
 
-.subtitle {
-  color: #666;
-  margin-bottom: 30px;
-}
+  .wrap {
+    max-width: 780px;
+    margin: 0 auto;
+  }
 
-.card {
-  background: white;
-  padding: 25px;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
-}
+  header {
+    margin-bottom: 40px;
+  }
 
-textarea {
-  width: 100%;
-  height: 160px;
-  padding: 15px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  font-size: 15px;
-}
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 42px;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
 
-button {
-  margin-top: 15px;
-  padding: 14px 22px;
-  border: none;
-  background: black;
-  color: white;
-  border-radius: 10px;
-  font-size: 15px;
-  cursor: pointer;
-}
+  header p {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 300;
+  }
 
-.score {
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 20px;
+  }
 
-.good { color: green; }
-.medium { color: orange; }
-.bad { color: red; }
+  textarea {
+    width: 100%;
+    height: 180px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    background: var(--bg);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
 
-.block {
-  margin-top: 15px;
-}
+  textarea:focus { border-color: #999; }
 
-.label {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
 
-ul {
-  padding-left: 20px;
-}
+  .btn-primary {
+    background: var(--text);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
 
-.improved {
-  background: #f1f5f9;
-  padding: 15px;
-  border-radius: 10px;
-  white-space: pre-line;
-}
+  .btn-primary:hover { opacity: 0.8; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-secondary:hover { background: var(--bg); }
+
+  #results { display: none; }
+
+  .overall-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 28px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+
+  .big-score {
+    font-family: 'DM Serif Display', serif;
+    font-size: 72px;
+    line-height: 1;
+    min-width: 100px;
+  }
+
+  .score-info h2 {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .score-info p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .stat-pill {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .metric-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .metric-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .metric-score {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  .progress-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 16px;
+  }
+
+  .section-card h3 {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 18px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .feedback-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .feedback-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .feedback-item:first-child { padding-top: 0; }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  .tip-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .tip-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .tip-item:first-child { padding-top: 0; }
+
+  .tip-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--muted);
+    min-width: 20px;
+    flex-shrink: 0;
+  }
+
+  .improved-text {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-line;
+    color: var(--text);
+  }
+
+  .copy-btn {
+    margin-top: 14px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .copy-btn:hover { background: var(--bg); }
+
+  @media (max-width: 520px) {
+    .metrics-grid { grid-template-columns: 1fr; }
+    .overall-card { flex-direction: column; gap: 16px; }
+    header h1 { font-size: 32px; }
+  }
 </style>
 </head>
-
 <body>
 
-<div class="container">
+<div class="wrap">
+  <header>
+    <h1>Content Quality<br>Checker</h1>
+    <p>Analyzuj text z pohľadu SEO, GEO, štruktúry a čitateľnosti — bez API, okamžite.</p>
+  </header>
 
-  <h1>AI Content Quality Checker</h1>
-  <div class="subtitle">Zlepši svoj text – SEO, čitateľnosť a konverzia</div>
-
-  <div class="card">
-    <textarea id="text" placeholder="Vlož text... napr. popis bytu v Košiciach"></textarea>
-    <button onclick="analyze()">Analyzovať</button>
-  </div>
-
-  <div class="card" id="result" style="display:none;">
-    <div class="score" id="score"></div>
-
-    <div class="block">
-      <div class="label">❌ Chyby</div>
-      <ul id="errors"></ul>
-    </div>
-
-    <div class="block">
-      <div class="label">💡 Odporúčania</div>
-      <ul id="tips"></ul>
-    </div>
-
-    <div class="block">
-      <div class="label">✨ Vylepšený text</div>
-      <div class="improved" id="improved"></div>
+  <div class="input-card">
+    <textarea id="text" placeholder="Vlož sem text inzerátu, článku alebo akéhokoľvek obsahu..."></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="analyze()">Analyzovať text</button>
+      <button class="btn-secondary" onclick="loadSample()">Ukážkový text</button>
     </div>
   </div>
 
+  <div id="results">
+
+    <div class="overall-card">
+      <div class="big-score" id="overall-score"></div>
+      <div class="score-info">
+        <h2 id="verdict"></h2>
+        <p id="summary"></p>
+        <div class="stats-row" id="stats-row"></div>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-top">
+          <span class="metric-name">Štruktúra</span>
+          <span class="metric-score" id="s-structure"></span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="b-structure"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <span class="metric-name">SEO</span>
+          <span class="metric-score" id="s-seo"></span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="b-seo"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <span class="metric-name">GEO</span>
+          <span class="metric-score" id="s-geo"></span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="b-geo"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <span class="metric-name">Čitateľnosť</span>
+          <span class="metric-score" id="s-read"></span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="b-read"></div></div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h3>Spätná väzba</h3>
+      <div id="feedback-list"></div>
+    </div>
+
+    <div class="section-card">
+      <h3>Ako zlepšiť</h3>
+      <div id="tips-list"></div>
+    </div>
+
+    <div class="section-card">
+      <h3>Vylepšený text</h3>
+      <div class="improved-text" id="improved"></div>
+      <button class="copy-btn" onclick="copyImproved()">Kopírovať text</button>
+    </div>
+
+  </div>
 </div>
 
 <script>
+function scoreColor(s) {
+  if (s >= 75) return '#2D6A4F';
+  if (s >= 50) return '#B5540A';
+  return '#B91C1C';
+}
+
+function dotColor(type) {
+  if (type === 'ok') return '#2D6A4F';
+  if (type === 'warn') return '#B5540A';
+  return '#B91C1C';
+}
+
+function loadSample() {
+  document.getElementById('text').value = `Zariadený 2-izbový apartmán na predaj – Drač, Albánsko
+
+Ponúkame na predaj útulný 2-izbový apartmán v obľúbenej prímorskej lokalite pri meste Drač. Apartmán sa nachádza na 3. poschodí bytového domu s výťahom, v pešej dostupnosti od pláže. Disponuje bočným výhľadom na more a predáva sa kompletne zariadený.
+
+Výmera: 55 m². Balkón, výťah, kompletné zariadenie.
+
+Lokalita Drač patrí medzi najvýznamnejšie prímorské mestá Albánska s rastúcim investičným potenciálom. Ceny nehnuteľností rastú viac ako 10 % ročne.
+
+Kontaktujte nás pre viac informácií alebo obhliadku: +421 948 88 11 28`;
+}
+
 function analyze() {
-  const text = document.getElementById("text").value;
-  const result = document.getElementById("result");
+  const raw = document.getElementById('text').value;
+  const text = raw.trim();
+  if (text.length < 30) { alert('Vlož aspoň kratší text.'); return; }
 
-  if (text.trim() === "") {
-    alert("Vlož text");
-    return;
-  }
+  const words = text.split(/\s+/).filter(w => w.length > 0);
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 3);
+  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+  const uniqueWords = new Set(words.map(w => w.toLowerCase().replace(/[^a-záéíóúäöüčšžýňťľŕ]/g, '')));
+  const avgSentLen = words.length / Math.max(sentences.length, 1);
+  const avgWordLen = words.join('').length / Math.max(words.length, 1);
 
-  let score = 50;
-  let errors = [];
-  let tips = [];
+  // --- STRUCTURE ---
+  let structure = 40;
+  const feedback = [];
+  const tips = [];
 
-  if (text.length < 200) {
-    errors.push("Text je príliš krátky");
-    tips.push("Rozšír text o detaily a benefity");
+  if (paragraphs.length >= 3) { structure += 20; feedback.push({type:'ok', text:'Text má viac odsekov – dobrá štruktúra.'}); }
+  else { feedback.push({type:'bad', text:'Text má málo odsekov.'}); tips.push('Rozdeľ text na 3+ odseky – úvod, jadro, záver.'); }
+
+  if (sentences.length >= 5) { structure += 15; }
+  else { feedback.push({type:'warn', text:'Príliš málo viet.'}); tips.push('Pridaj viac viet – ideálne 8+.'); }
+
+  if (avgSentLen < 25) { structure += 15; feedback.push({type:'ok', text:'Vety sú primerane krátke a zrozumiteľné.'}); }
+  else { feedback.push({type:'warn', text:'Niektoré vety sú príliš dlhé.'}); tips.push('Skráť vety dlhšie ako 25 slov na kratšie celky.'); }
+
+  if (text.includes(':\n') || text.includes('- ') || text.includes('•')) { structure += 10; feedback.push({type:'ok', text:'Používaš zoznamy alebo odrážky – prehľadnosť +.'}); }
+
+  // --- SEO ---
+  let seo = 35;
+  if (words.length >= 200) { seo += 20; feedback.push({type:'ok', text:'Dostatočná dĺžka textu pre SEO (' + words.length + ' slov).'}); }
+  else if (words.length >= 100) { seo += 10; feedback.push({type:'warn', text:'Text je krátky (' + words.length + ' slov). Pre SEO odporúčame 300+.'}); tips.push('Rozšír text na min. 300 slov pre lepšie SEO hodnotenie.'); }
+  else { feedback.push({type:'bad', text:'Text je príliš krátky pre SEO (' + words.length + ' slov).'}); tips.push('Rozšír text na min. 300 slov.'); }
+
+  const uniqueRatio = uniqueWords.size / Math.max(words.length, 1);
+  if (uniqueRatio > 0.55) { seo += 15; feedback.push({type:'ok', text:'Dobrá rozmanitosť slovnej zásoby.'}); }
+  else { feedback.push({type:'warn', text:'Nízka rozmanitosť slov – text sa opakuje.'}); tips.push('Obmieňaj slovnú zásobu, vyhýbaj sa opakovaniu rovnakých výrazov.'); }
+
+  if (/\d/.test(text)) { seo += 15; feedback.push({type:'ok', text:'Text obsahuje čísla a konkrétne dáta – SEO bonus.'}); }
+  else { feedback.push({type:'warn', text:'Chýbajú čísla alebo konkrétne dáta.'}); tips.push('Pridaj konkrétne čísla – cena, plocha, vzdialenosť, rok.'); }
+
+  const fillerWords = ['veľmi', 'naozaj', 'vlastne', 'celkom', 'dosť', 'jednoducho', 'základne'];
+  const fillerCount = fillerWords.filter(w => text.toLowerCase().includes(w)).length;
+  if (fillerCount === 0) { seo += 15; }
+  else { feedback.push({type:'warn', text:'Výplňové slová znižujú kvalitu textu (' + fillerCount + ' výskyt/y).'}); tips.push('Odstraň výplňové slová ako: veľmi, naozaj, vlastne, celkom.'); }
+
+  // --- GEO ---
+  let geo = 35;
+  const hasQuestions = text.includes('?');
+  const hasNumbers = /\d+/.test(text);
+  const hasFacts = text.match(/\d+\s*(m²|km|%|EUR|€|\+)/g);
+  const hasDirectAnswer = sentences.some(s => s.trim().split(' ').length < 15);
+
+  if (hasNumbers) { geo += 20; }
+  if (hasFacts && hasFacts.length >= 2) { geo += 20; feedback.push({type:'ok', text:'Konkrétne fakty a merania zvyšujú GEO score.'}); }
+  else { tips.push('Pridaj viac konkrétnych faktov – m², cena v EUR, vzdialenosť v km.'); }
+
+  if (hasDirectAnswer) { geo += 15; feedback.push({type:'ok', text:'Text obsahuje krátke priame vety – vhodné pre AI vyhľadávače.'}); }
+  else { tips.push('Pridaj krátke priame vety (odpovede na otázky ako: Čo? Kde? Za koľko?).'); }
+
+  if (hasQuestions) { geo += 10; }
+
+  // --- READABILITY ---
+  let read = 40;
+  if (avgSentLen <= 15) { read += 30; }
+  else if (avgSentLen <= 22) { read += 20; }
+  else if (avgSentLen <= 30) { read += 10; }
+  else { feedback.push({type:'bad', text:'Príliš dlhé vety sťažujú čítanie (priemer: ' + Math.round(avgSentLen) + ' slov/veta).'}); tips.push('Skráť priemerné vety pod 20 slov.'); }
+
+  if (avgWordLen <= 5.5) { read += 20; }
+  else if (avgWordLen <= 7) { read += 10; }
+  else { feedback.push({type:'warn', text:'Zložité dlhé slová znižujú čitateľnosť.'}); tips.push('Používaj jednoduchšie, kratšie slová kde je to možné.'); }
+
+  if (text.includes('kontakt') || text.toLowerCase().includes('volajte') || text.toLowerCase().includes('napíšte')) {
+    read += 10; feedback.push({type:'ok', text:'Výzva k akcii (CTA) je prítomná.'});
+    seo += 10;
   } else {
-    score += 10;
+    feedback.push({type:'bad', text:'Chýba výzva k akcii (CTA).'}); tips.push('Pridaj CTA – napr. "Kontaktujte nás", "Zavolajte" alebo "Napíšte na email".');
   }
 
-  if (!text.includes("Košice") && !text.includes("lokalita")) {
-    errors.push("Chýba lokalita");
-    tips.push("Pridaj konkrétnu lokalitu (napr. Košice)");
-  } else {
-    score += 10;
+  // Cap scores
+  structure = Math.min(100, Math.round(structure));
+  seo = Math.min(100, Math.round(seo));
+  geo = Math.min(100, Math.round(geo));
+  read = Math.min(100, Math.round(read));
+  const overall = Math.round((structure + seo + geo + read) / 4);
+
+  // Verdict
+  let verdict = overall >= 80 ? 'Výborný text' : overall >= 65 ? 'Dobrý text' : overall >= 50 ? 'Priemerný text' : 'Text potrebuje zlepšenie';
+  let summary = overall >= 80 ? 'Text je kvalitný, dobre štruktúrovaný a pripravený na publikovanie.' :
+    overall >= 65 ? 'Text je dobrý, ale niekoľko úprav ho výrazne zlepší.' :
+    overall >= 50 ? 'Text má potenciál, no vyžaduje viaceré úpravy.' :
+    'Text potrebuje výrazné prepracovanie pred publikovaním.';
+
+  // Render
+  const oc = scoreColor(overall);
+  document.getElementById('overall-score').textContent = overall;
+  document.getElementById('overall-score').style.color = oc;
+  document.getElementById('verdict').textContent = verdict;
+  document.getElementById('summary').textContent = summary;
+
+  document.getElementById('stats-row').innerHTML =
+    `<span class="stat-pill">${words.length} slov</span>
+     <span class="stat-pill">${sentences.length} viet</span>
+     <span class="stat-pill">${paragraphs.length} odsekov</span>
+     <span class="stat-pill">∅ ${Math.round(avgSentLen)} slov/veta</span>`;
+
+  const metrics = [
+    {id: 'structure', score: structure},
+    {id: 'seo', score: seo},
+    {id: 'geo', score: geo},
+    {id: 'read', score: read}
+  ];
+  metrics.forEach(m => {
+    const c = scoreColor(m.score);
+    document.getElementById('s-' + m.id).textContent = m.score;
+    document.getElementById('s-' + m.id).style.color = c;
+    const bar = document.getElementById('b-' + m.id);
+    bar.style.width = '0%';
+    bar.style.background = c;
+    setTimeout(() => { bar.style.width = m.score + '%'; }, 100);
+  });
+
+  // Feedback
+  document.getElementById('feedback-list').innerHTML = feedback.map(f =>
+    `<div class="feedback-item">
+      <div class="dot" style="background:${dotColor(f.type)}"></div>
+      <span>${f.text}</span>
+    </div>`
+  ).join('');
+
+  // Tips
+  if (tips.length === 0) tips.push('Text je v dobrom stave. Skontroluj ešte raz pravopis a publikuj.');
+  document.getElementById('tips-list').innerHTML = tips.map((t, i) =>
+    `<div class="tip-item">
+      <span class="tip-num">${i + 1}</span>
+      <span>${t}</span>
+    </div>`
+  ).join('');
+
+  // Improved text
+  let improved = text;
+  improved = improved.replace(/\b(veľmi|naozaj|vlastne|celkom|dosť|jednoducho)\b/gi, '');
+  improved = improved.replace(/\s{2,}/g, ' ').trim();
+
+  const sentences2 = improved.split(/(?<=[.!?])\s+/);
+  const fixed = sentences2.map(s => {
+    const ww = s.split(' ');
+    if (ww.length > 30) {
+      const mid = Math.floor(ww.length / 2);
+      return ww.slice(0, mid).join(' ') + '. ' + ww.slice(mid).join(' ');
+    }
+    return s;
+  });
+  improved = fixed.join(' ');
+
+  if (!improved.toLowerCase().includes('kontakt')) {
+    improved += '\n\n📞 Kontaktujte nás pre viac informácií alebo osobnú konzultáciu.';
   }
 
-  if (!text.toLowerCase().includes("kontakt")) {
-    errors.push("Chýba výzva k akcii");
-    tips.push("Pridaj CTA – napr. Kontaktujte nás");
-  } else {
-    score += 10;
-  }
+  document.getElementById('improved').textContent = improved;
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
-  if (!text.includes(".")) {
-    errors.push("Text nemá štruktúru viet");
-    tips.push("Použi krátke vety a odseky");
-  } else {
-    score += 10;
-  }
-
-  if (score > 100) score = 100;
-
-  // farba skóre
-  let scoreClass = "bad";
-  if (score >= 75) scoreClass = "good";
-  else if (score >= 60) scoreClass = "medium";
-
-  document.getElementById("score").innerHTML =
-    "Skóre: <span class='" + scoreClass + "'>" + score + "/100</span>";
-
-  // vypíš chyby
-  let errorsHTML = "";
-  errors.forEach(e => errorsHTML += "<li>" + e + "</li>");
-  document.getElementById("errors").innerHTML = errorsHTML;
-
-  // vypíš tipy
-  let tipsHTML = "";
-  tips.forEach(t => tipsHTML += "<li>" + t + "</li>");
-  document.getElementById("tips").innerHTML = tipsHTML;
-
-  // ✨ vylepšený text
-  let improved = 
-`🏡 EXKLUZÍVNA PONUKA
-
-Ponúkame na predaj nehnuteľnosť v atraktívnej lokalite.
-
-Táto nehnuteľnosť je ideálna pre bývanie aj investíciu. Vyznačuje sa praktickou dispozíciou a príjemným prostredím.
-
-📍 Lokalita: Košice
-
-💰 Cena: na vyžiadanie
-
-✨ Výhody:
-- dobrá dostupnosť
-- kompletná občianska vybavenosť
-- potenciál rastu hodnoty
-
-📞 Kontaktujte nás pre viac informácií alebo obhliadku.`;
-
-  document.getElementById("improved").innerText = improved;
-
-  result.style.display = "block";
+function copyImproved() {
+  const text = document.getElementById('improved').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Skopírované ✓';
+    setTimeout(() => { btn.textContent = 'Kopírovať text'; }, 2000);
+  });
 }
 </script>
 
