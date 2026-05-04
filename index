@@ -1,0 +1,253 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { analyze, improve, SAMPLE_TEXT, type AnalysisResult, type Feedback } from "@/lib/analyzer";
+import { diffWords } from "@/lib/diff";
+import { cn } from "@/lib/utils";
+
+const DiffView = ({ before, after }: { before: string; after: string }) => {
+  const parts = diffWords(before, after);
+  return (
+    <div className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+      {parts.map((p, i) => {
+        if (p.type === "same") return <span key={i}>{p.text}</span>;
+        if (p.type === "added")
+          return (
+            <span
+              key={i}
+              className="rounded bg-success/15 px-0.5 text-success-foreground"
+              style={{ color: "hsl(var(--success))" }}
+            >
+              {p.text}
+            </span>
+          );
+        return (
+          <span
+            key={i}
+            className="rounded bg-danger/10 px-0.5 line-through opacity-70"
+            style={{ color: "hsl(var(--danger))" }}
+          >
+            {p.text}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
+const tone = (score: number) => {
+  if (score >= 75) return { text: "text-success", bg: "bg-success" };
+  if (score >= 50) return { text: "text-warning", bg: "bg-warning" };
+  return { text: "text-danger", bg: "bg-danger" };
+};
+
+const dotColor = (level: Feedback["level"]) =>
+  level === "good" ? "bg-success" : level === "warn" ? "bg-warning" : "bg-danger";
+
+const MetricCard = ({ label, score, hint }: { label: string; score: number; hint: string }) => {
+  const t = tone(score);
+  return (
+    <div className="rounded-xl border bg-card p-5 shadow-sm">
+      <div className="flex items-baseline justify-between">
+        <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
+        <span className={cn("text-2xl font-bold tabular-nums", t.text)}>{score}</span>
+      </div>
+      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className={cn("h-full rounded-full transition-all", t.bg)} style={{ width: `${score}%` }} />
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
+};
+
+const Stat = ({ value, label }: { value: number | string; label: string }) => (
+  <div className="text-center">
+    <div className="text-2xl font-bold tabular-nums">{value}</div>
+    <div className="text-xs text-muted-foreground">{label}</div>
+  </div>
+);
+
+const Index = () => {
+  const [text, setText] = useState("");
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [improved, setImproved] = useState<string | null>(null);
+  const [improvedResult, setImprovedResult] = useState<AnalysisResult | null>(null);
+
+  const handleAnalyze = () => {
+    setResult(analyze(text));
+    setImproved(null);
+    setImprovedResult(null);
+  };
+  const handleSample = () => {
+    setText(SAMPLE_TEXT);
+    setResult(null);
+    setImproved(null);
+    setImprovedResult(null);
+  };
+  const handleImprove = () => {
+    const better = improve(text);
+    setImproved(better);
+    setImprovedResult(analyze(better));
+  };
+
+  const overallTone = result ? tone(result.overall) : null;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-4xl px-6 py-12 md:py-16">
+        <header className="mb-10">
+          <div className="mb-3 inline-block rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+            ECO PRODUKT · Nástroj pre obsah
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground md:text-5xl">
+            AI Content Quality Checker
+          </h1>
+          <p className="mt-3 text-base text-muted-foreground md:text-lg">
+            Vlož text a získaj okamžité hodnotenie kvality – štruktúra, SEO, GEO a čitateľnosť.
+          </p>
+        </header>
+
+        <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Sem vlož text, ktorý chceš analyzovať..."
+            className="min-h-[220px] resize-y border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0"
+          />
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
+            <Button onClick={handleAnalyze} disabled={!text.trim()} size="lg">
+              Analyzovať
+            </Button>
+            <Button onClick={handleSample} variant="outline" size="lg">
+              Skúsiť ukážkový text
+            </Button>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {text.trim() ? `${text.trim().split(/\s+/).length} slov` : "0 slov"}
+            </span>
+          </div>
+        </section>
+
+        {result && (
+          <section className="mt-10 space-y-8">
+            <div className="rounded-2xl border bg-card p-6 shadow-sm md:p-8">
+              <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Celkové skóre</p>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className={cn("text-7xl font-bold tabular-nums leading-none", overallTone!.text)}>
+                      {result.overall}
+                    </span>
+                    <span className="text-2xl text-muted-foreground">/ 100</span>
+                  </div>
+                  <p className="mt-3 max-w-md text-sm text-foreground">{result.summary}</p>
+                </div>
+                <div className="grid grid-cols-4 gap-4 md:gap-6">
+                  <Stat value={result.stats.words} label="slov" />
+                  <Stat value={result.stats.sentences} label="viet" />
+                  <Stat value={result.stats.paragraphs} label="odsekov" />
+                  <Stat value={result.stats.avgSentence} label="ø veta" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <MetricCard label="Štruktúra" score={result.structure} hint="Odseky, dĺžka viet, logické členenie" />
+              <MetricCard label="SEO" score={result.seo} hint="Dĺžka, kľúčové slová, hustota" />
+              <MetricCard label="GEO" score={result.geo} hint="Fakty, čísla, priame odpovede" />
+              <MetricCard label="Čitateľnosť" score={result.readability} hint="Flesch index, trpný rod" />
+            </div>
+
+            <div className="rounded-2xl border bg-card p-6 shadow-sm">
+              <h2 className="mb-4 text-lg font-semibold">Spätná väzba</h2>
+              <ul className="space-y-3">
+                {result.feedback.map((f, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className={cn("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full", dotColor(f.level))} />
+                    <span className="text-sm text-foreground">{f.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {result.suggestions.length > 0 && (
+              <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold">Ako zlepšiť</h2>
+                  <Button onClick={handleImprove} variant="default">
+                    Opraviť text
+                  </Button>
+                </div>
+                <ol className="space-y-3">
+                  {result.suggestions.map((s, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-foreground">{s}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
+            {improved && (
+              <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold">Vylepšený text</h2>
+                  {improvedResult && (
+                    <span className="text-sm text-muted-foreground">
+                      Nové skóre:{" "}
+                      <span className={cn("font-bold", tone(improvedResult.overall).text)}>
+                        {improvedResult.overall}
+                      </span>
+                      <span className="ml-1 text-xs">
+                        ({improvedResult.overall - result.overall >= 0 ? "+" : ""}
+                        {improvedResult.overall - result.overall})
+                      </span>
+                    </span>
+                  )}
+                </div>
+                <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "hsl(var(--success) / 0.25)" }} />
+                    pridané
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "hsl(var(--danger) / 0.2)" }} />
+                    odstránené
+                  </span>
+                </div>
+                <div className="rounded-lg border bg-muted/40 p-4">
+                  <DiffView before={text} after={improved} />
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Úpravy: odstránené výplnkové slová, rozdelené dlhé vety, doplnené odstavce.
+                </p>
+                <div className="mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setText(improved);
+                      setResult(improvedResult);
+                      setImproved(null);
+                      setImprovedResult(null);
+                    }}
+                  >
+                    Použiť vylepšený text
+                  </Button>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        <footer className="mt-16 text-center text-xs text-muted-foreground">
+          Analýza prebieha lokálne v prehliadači · ECO PRODUKT
+        </footer>
+      </div>
+    </div>
+  );
+};
+
+export default Index;
